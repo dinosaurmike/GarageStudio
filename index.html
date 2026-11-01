@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Garage Studio | WebXR Garage Organizer</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📐</text></svg>">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="description" content="Architectural WebXR garage storage organizer designer using dimensional lumber and Simpson Strong-Tie structural hardware.">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <script type="module" crossorigin src="./assets/index-gs1.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-CrHfs-w2.css">
+</head>
+<body>
+  <!-- 3D WebGL / WebXR Viewport Canvas -->
+  <div id="canvas-container"></div>
+
+  <!-- WebXR DOM Overlay & Architectural Studio Interface -->
+  <div id="xr-overlay" class="ui-overlay">
+    
+    <!-- Top Architectural Studio Navigation Bar -->
+    <header class="top-nav-bar interactive">
+      <!-- Left: Brand Monogram -->
+      <div class="nav-brand-group">
+        <div class="brand-titles">
+          <span class="brand-name">GARAGE STUDIO</span>
+          <span class="brand-sub">STRUCTURAL HARDWARE</span>
+        </div>
+      </div>
+
+      <!-- Right: Real-time Estimated Safe Load Pill & Primary AR Action -->
+      <div class="nav-actions-group">
+        <!-- Estimated Load Badge with 20% Safety Factor & Lateral Support Inspector -->
+        <div id="capacity-badge" class="capacity-pill" role="button" tabindex="0" title="Estimated safe working load (20% engineering safety reduction). Click to inspect structural capacity &amp; lateral support requirements." aria-label="Estimated safe working load. Click to inspect structural capacity and lateral support requirements.">
+          <span class="pulse-dot"></span>
+          <span id="capacity-text">1,840 lbs Safe</span>
+          <span class="safety-tag">20% MARGIN</span>
+        </div>
+
+        <!-- Dedicated BOM / Materials Action Button -->
+        <button id="btn-top-bom" class="btn-nav-action highlight-action" title="View Bill of Materials (BOM) & Store Aisle Router">
+          <span class="nav-btn-icon">🛒</span>
+          <span class="btn-text-desktop">Materials (BOM)</span>
+        </button>
+
+        <!-- Dedicated Global Undo Action Button (Prominent in Top-Right) -->
+        <button id="btn-global-undo" class="btn-nav-action btn-global-undo-prominent interactive" title="Undo last change (Ctrl+Z)" aria-label="Undo last change">
+          <span class="nav-btn-icon">↩️</span>
+          <span class="btn-text-always">Undo</span>
+        </button>
+
+        <!-- Primary Action: Enter AR -->
+        <button id="btn-ar" class="btn-nav-ar" title="Launch WebXR Camera AR Mode">
+          <span class="ar-icon">👓</span>
+          <span id="ar-btn-label">Enter AR</span>
+        </button>
+
+        <!-- Progressive Disclosure: Compact Tools Dropdown -->
+        <div class="top-menu-container">
+          <button id="btn-top-menu" class="btn-nav-more" title="Tools & Integrations Menu" aria-haspopup="true" aria-expanded="false">
+            <span class="menu-dots">···</span>
+            <span class="btn-text-desktop">Tools ▾</span>
+          </button>
+
+          <!-- Floating Progressive Disclosure Dropdown Card -->
+          <div id="top-actions-dropdown" class="top-dropdown-menu interactive">
+            <div class="dropdown-header">Studio Tools & Integrations</div>
+            <button id="drop-btn-wizard" class="dropdown-item">
+              <span class="drop-icon">✨</span>
+              <div class="drop-text">
+                <span class="drop-title">Project Setup Wizard</span>
+                <span class="drop-sub">Select use case, size & place in AR</span>
+              </div>
+            </button>
+            <button id="drop-btn-cart" class="dropdown-item">
+              <span class="drop-icon">🛒</span>
+              <div class="drop-text">
+                <span class="drop-title">Order Materials (BOM)</span>
+                <span class="drop-sub">Home Depot & Lowe's Aisle routing</span>
+              </div>
+            </button>
+            <button id="drop-btn-pdf" class="dropdown-item">
+              <span class="drop-icon">📄</span>
+              <div class="drop-text">
+                <span class="drop-title">Export Assembly Blueprint</span>
+                <span class="drop-sub">4-page step-by-step PDF plan</span>
+              </div>
+            </button>
+            <button id="drop-btn-hardware" class="dropdown-item">
+              <span class="drop-icon">🔩</span>
+              <div class="drop-text">
+                <span class="drop-title">Hardware Catalog</span>
+                <span class="drop-sub">Inspect 3D parts & NDS load specs</span>
+              </div>
+            </button>
+            <button id="drop-btn-share" class="dropdown-item">
+              <span class="drop-icon">🔗</span>
+              <div class="drop-text">
+                <span class="drop-title">Share Project Design</span>
+                <span class="drop-sub">Copy configuration link & specs</span>
+              </div>
+            </button>
+            <button id="drop-btn-reset-design" class="dropdown-item">
+              <span class="drop-icon">🔄</span>
+              <div class="drop-text">
+                <span class="drop-title">Reset Design to Default</span>
+                <span class="drop-sub">Restore standard 4-shelf tote organizer</span>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Collision & Framing Notification Banner -->
+    <div id="toast-banner" class="toast-banner">
+      <span id="toast-icon">✓</span>
+      <span id="toast-message">Shelf adjusted to clear wall obstacle.</span>
+    </div>
+
+    <!-- AR 2-Step Wall Mount Stepper (Top Floating Glass Pill, Safe-Area Padded) -->
+    <div id="ar-wizard-header" class="ar-wizard-header interactive" style="display: none;">
+      <div class="ar-step-group">
+        <button class="ar-step-item active" data-step="1" title="Step 1: Set Floor Ground Level" aria-label="Step 1: Floor">
+          <span class="ar-step-num">1</span>
+          <span class="ar-step-label">Floor</span>
+        </button>
+        <div class="ar-step-divider"></div>
+        <button class="ar-step-item" data-step="2" title="Step 2: Anchor on Wall" aria-label="Step 2: Anchor on Wall">
+          <span class="ar-step-num">2</span>
+          <span class="ar-step-label">Anchor on Wall</span>
+        </button>
+      </div>
+      <button id="btn-ar-undo" class="ar-step-undo interactive" title="Undo last change in AR" aria-label="Undo in AR">
+        <span class="ar-undo-icon">↩️</span>
+        <span class="ar-undo-text">Undo</span>
+      </button>
+      <button id="btn-ar-exit-top" class="ar-step-exit" title="Exit AR Mode" aria-label="Exit AR">
+        <span>✕ Exit</span>
+      </button>
+    </div>
+
+    <!-- AR Surface Target Guidance Prompt (Floating below header, auto-spaced) -->
+    <div id="ar-prompt" class="ar-prompt" style="display: none;">
+      <span class="reticle-dot"></span>
+      <span id="ar-prompt-text">🪜 Step 1/2: Tap floor at base of wall</span>
+    </div>
+
+    <!-- AR Resume Saved Placement Banner -->
+    <div id="ar-resume-banner" class="ar-resume-banner interactive" style="display: none;">
+      <div class="ar-resume-card">
+        <div class="ar-resume-info">
+          <span class="ar-resume-icon">📍</span>
+          <span class="ar-resume-text">Previous wall anchor saved</span>
+        </div>
+        <div class="ar-resume-actions">
+          <button id="btn-ar-resume" class="btn-ar-tool success" title="Resume previous wall anchor">
+            <span>📍 Resume Position</span>
+          </button>
+          <button id="btn-ar-place-fresh" class="btn-ar-tool" title="Place fresh on floor & wall">
+            <span>🪜 Place Fresh</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- AR Target Mode Selector (Optional manual mode override) -->
+    <div id="ar-target-selector" class="ar-target-selector interactive" style="display: none;">
+      <button id="btn-ar-target-twostep" class="ar-target-btn active" data-target-mode="twostep" title="2-Step Flow: Floor → Wall Anchor">
+        <span>🪜 2-Step Anchor</span>
+      </button>
+      <button id="btn-ar-target-wall" class="ar-target-btn" data-target-mode="wall" title="Target wall with auto-grounding">
+        <span>🧱 Wall</span>
+      </button>
+      <button id="btn-ar-target-floor" class="ar-target-btn" data-target-mode="floor" title="Target horizontal floor plane">
+        <span>🟦 Floor</span>
+      </button>
+    </div>
+
+    <!-- Floating Re-open Control when AR Toolbar is minimized after Done -->
+    <button id="ar-floating-edit-btn" class="ar-floating-edit-btn interactive" style="display: none;" title="Reopen organizer controls">
+      <span class="floating-edit-icon">🛠️</span>
+      <span class="floating-edit-text">Adjust & Edit</span>
+    </button>
+
+    <!-- AR Placed Result Action Toolbar (Frosted Glass, Zero Edge Bleed-off, Collision-Free) -->
+    <div id="ar-placed-toolbar" class="ar-placed-toolbar interactive" style="display: none;">
+      <div class="ar-placed-card">
+        <!-- Top Row: Mode Switch Tabs & Main Actions -->
+        <div class="ar-placed-tabs-row">
+          <div class="ar-segmented-tab-bar">
+            <button id="btn-ar-tab-placement" class="ar-tab-btn active" title="Adjust real-world wall placement">
+              <span>📍 Placement</span>
+            </button>
+            <button id="btn-ar-tab-shelves" class="ar-tab-btn" title="Customize shelves, rows, and bays">
+              <span>🪵 Shelving</span>
+            </button>
+          </div>
+          <div class="ar-top-actions-cluster">
+            <button id="btn-ar-toggle-wireframe" class="btn-ar-tool" title="Toggle wireframe and solid lumber">
+              <span id="ar-wireframe-label">🧊 Wireframe</span>
+            </button>
+            <button id="btn-ar-done" class="btn-ar-tool success" title="Confirm and view in 1:1 scale">
+              <span>✓ Done</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Panel 1: Physical Scene & Wall Placement Controls -->
+        <div id="ar-panel-placement" class="ar-tab-panel">
+          <div class="ar-placement-controls-row">
+            <div class="ar-tune-cluster">
+              <span class="ar-tune-label">Height</span>
+              <div class="ar-tune-btns">
+                <button id="btn-ar-drop-floor" class="btn-ar-tool" title="Snap unit feet to floor">
+                  <span>⬇️ Floor</span>
+                </button>
+                <button id="btn-ar-elev-down" class="btn-ar-tool" title="Lower 3 inches">
+                  <span>▼ −3"</span>
+                </button>
+                <button id="btn-ar-elev-up" class="btn-ar-tool" title="Raise 3 inches">
+                  <span>▲ +3"</span>
+                </button>
+              </div>
+            </div>
+            <div class="ar-tune-cluster">
+              <span class="ar-tune-label">Square to Wall</span>
+              <div class="ar-tune-btns">
+                <button id="btn-ar-snap-90" class="btn-ar-tool highlight" title="Magnetic snap square to nearest 90°">
+                  <span>🧲 90°</span>
+                </button>
+                <button id="btn-ar-rot-left" class="btn-ar-tool" title="Turn 5 degrees left to square with wall">
+                  <span>⟲ −5°</span>
+                </button>
+                <button id="btn-ar-rot-right" class="btn-ar-tool" title="Turn 5 degrees right to square with wall">
+                  <span>⟳ +5°</span>
+                </button>
+              </div>
+            </div>
+            <div class="ar-reposition-cluster">
+              <button id="btn-ar-reset" class="btn-ar-tool danger" title="Reposition organizer in AR">
+                <span class="reset-icon">🔄</span>
+                <span class="reset-label">Move</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 2: Carpentry & Shelving Controls -->
+        <div id="ar-panel-shelves" class="ar-tab-panel" style="display: none;">
+          <!-- Shelf Selection Strip: Select individual tiers directly -->
+          <div class="ar-shelf-selection-row">
+            <span class="ar-strip-label">Select Shelf:</span>
+            <div id="ar-shelf-tier-strip" class="ar-shelf-tier-strip">
+              <!-- Dynamically populated chips, e.g. [ Tier 1: 18" ] [ Tier 2: 38" ] ... -->
+            </div>
+            <button id="btn-ar-tier-add-strip" class="btn-ar-tool compact success" title="Add new tier">
+              <span>➕ Add</span>
+            </button>
+          </div>
+
+          <!-- Active Selected Shelf Tier Actions -->
+          <div class="ar-shelf-actions-row">
+            <div class="ar-tier-nudge-cluster">
+              <span class="ar-edit-label">Tier Height:</span>
+              <button id="btn-ar-tier-nudge-down" class="btn-ar-tool compact" title="Lower tier 2 inches">
+                <span>▼ −2"</span>
+              </button>
+              <span id="ar-active-tier-disp" class="ar-tier-pill">18"</span>
+              <button id="btn-ar-tier-nudge-up" class="btn-ar-tool compact" title="Raise tier 2 inches">
+                <span>▲ +2"</span>
+              </button>
+            </div>
+            <div class="ar-tier-manage-cluster">
+              <button id="btn-ar-tier-add" class="btn-ar-tool compact" title="Add new tier above">
+                <span>➕ Row Above</span>
+              </button>
+              <button id="btn-ar-tier-delete" class="btn-ar-tool compact danger" title="Delete selected tier">
+                <span>🗑️ Delete</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Columns & Display Toggles -->
+          <div class="ar-edit-options-row">
+            <div class="ar-cols-cluster">
+              <span class="ar-edit-label">Columns:</span>
+              <button id="btn-ar-col-full" class="btn-ar-tool compact" title="Add full vertical post column">
+                <span>🏛️ +Col</span>
+              </button>
+              <button id="btn-ar-col-part" class="btn-ar-tool compact" title="Add partial shelf divider stanchion">
+                <span>🪜 +Divider</span>
+              </button>
+              <button id="btn-ar-col-remove" class="btn-ar-tool compact" title="Remove column divider">
+                <span>➖ -Col</span>
+              </button>
+            </div>
+            <div class="ar-acc-cluster">
+              <button id="btn-ar-toggle-totes" class="btn-ar-tool compact" title="Toggle 27-Gallon Totes">
+                <span id="ar-totes-label">📦 Totes</span>
+              </button>
+              <button id="btn-ar-toggle-fasteners" class="btn-ar-tool compact active" title="Toggle Fastener Clusters">
+                <span id="ar-fasteners-label">🔩 Screws</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Click-to-Edit Contextual Shelf Tier & Modular Bay Toolbar -->
+    <div id="shelf-edit-toolbar" class="shelf-edit-toolbar interactive" style="display: none;">
+      <div class="shelf-edit-card">
+        <div class="shelf-edit-header">
+          <div class="shelf-edit-title-group">
+            <span class="shelf-edit-badge">SELECTED</span>
+            <span id="shelf-edit-title" class="shelf-edit-title">Shelf Tier #1</span>
+          </div>
+          <button id="btn-shelf-close" class="shelf-edit-close" title="Deselect shelf" aria-label="Close">&times;</button>
+        </div>
+        <div class="shelf-edit-actions">
+          <div class="shelf-action-group">
+            <button id="btn-shelf-delete" class="shelf-tool-btn danger" title="Delete this shelf tier">
+              <span>🗑️ Delete Row</span>
+            </button>
+            <button id="btn-shelf-add-above" class="shelf-tool-btn" title="Add shelf tier above">
+              <span>➕ Row Above</span>
+            </button>
+            <button id="btn-shelf-add-below" class="shelf-tool-btn" title="Add shelf tier below">
+              <span>➕ Row Below</span>
+            </button>
+          </div>
+          <div class="shelf-action-group nudge">
+            <span class="shelf-group-label">Elevation:</span>
+            <button id="btn-shelf-nudge-down" class="shelf-tool-btn compact" title="Lower shelf 2 inches">
+              <span>▼ −2"</span>
+            </button>
+            <span id="shelf-edit-elev-val" class="shelf-elev-val">18"</span>
+            <button id="btn-shelf-nudge-up" class="shelf-tool-btn compact" title="Raise shelf 2 inches">
+              <span>▲ +2"</span>
+            </button>
+          </div>
+          <div class="shelf-action-group columns">
+            <span class="shelf-group-label">Columns:</span>
+            <div class="col-add-wrapper">
+              <button id="btn-col-add" class="shelf-tool-btn compact" title="Add column divider">
+                <span>➕ Add Column</span>
+              </button>
+              <div id="col-add-popover" class="col-add-popover hidden">
+                <div class="col-popover-header">Add Column Divider</div>
+                <button id="btn-col-choice-full" type="button" class="col-popover-item">
+                  <span class="col-popover-icon">🏛️</span>
+                  <div class="col-popover-text">
+                    <strong>Full Column</strong>
+                    <small>All tiers (full height)</small>
+                  </div>
+                </button>
+                <button id="btn-col-choice-partial" type="button" class="col-popover-item">
+                  <span class="col-popover-icon">🪜</span>
+                  <div class="col-popover-text">
+                    <strong>Partial Column</strong>
+                    <small>This row only (shelf divider)</small>
+                  </div>
+                </button>
+              </div>
+            </div>
+            <button id="btn-col-remove" class="shelf-tool-btn compact" title="Remove divider column (merge bay)">
+              <span>➖ Remove Column</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dedicated Top-Right Floating Undo Action Bubble in 3D Render View -->
+    <div class="viewport-undo-bubble interactive">
+      <button id="btn-viewport-undo" class="action-bubble-btn undo-bubble-btn" title="Undo last change (Ctrl+Z)" aria-label="Undo last change" data-tooltip="Undo (Ctrl+Z)">
+        <span class="action-bubble-icon">↩️</span>
+      </button>
+    </div>
+
+    <!-- Floating Presets & Dimensions Action Bubble (Top-Left of 3D Space) -->
+    <div class="viewport-presets-bubble interactive">
+      <div class="top-presets-container">
+        <button id="btn-top-presets" class="action-bubble-btn presets-bubble-btn btn-nav-presets" title="Dimensions & Presets" aria-label="Dimensions & Presets" data-tooltip="Dimensions & Presets">
+          <span class="action-bubble-icon">📐</span>
+        </button>
+        <div id="top-presets-dropdown" class="top-presets-dropdown hidden">
+          <!-- Segmented Tab Header: Dimensions vs Presets -->
+          <div class="top-dropdown-tabs">
+            <button id="top-tab-dims" class="top-dropdown-tab active" data-top-tab="dims">
+              <span>📐 Dims</span>
+            </button>
+            <button id="top-tab-presets" class="top-dropdown-tab" data-top-tab="presets">
+              <span>📦 Presets</span>
+            </button>
+          </div>
+
+          <!-- Tab Pane 1: Zero-Scroll Dimension Steppers -->
+          <div id="top-pane-dims" class="top-tab-pane active">
+            <div class="dim-compact-grid">
+              <!-- Width -->
+              <div class="dim-compact-row">
+                <span class="dim-compact-label">Width</span>
+                <div class="dim-compact-stepper">
+                  <button class="step-btn" data-dim="width" data-delta="-6" aria-label="Decrease width">−</button>
+                  <span id="slider-val-w" class="dim-compact-val">64"</span>
+                  <button class="step-btn" data-dim="width" data-delta="6" aria-label="Increase width">+</button>
+                </div>
+              </div>
+
+              <!-- Height -->
+              <div class="dim-compact-row">
+                <span class="dim-compact-label">Height</span>
+                <div class="dim-compact-stepper">
+                  <button class="step-btn" data-dim="height" data-delta="-6" aria-label="Decrease height">−</button>
+                  <span id="slider-val-h" class="dim-compact-val">72"</span>
+                  <button class="step-btn" data-dim="height" data-delta="6" aria-label="Increase height">+</button>
+                </div>
+              </div>
+
+              <!-- Depth -->
+              <div class="dim-compact-row">
+                <span class="dim-compact-label">Depth</span>
+                <div class="dim-compact-stepper">
+                  <button class="step-btn" data-dim="depth" data-delta="-4" aria-label="Decrease depth">−</button>
+                  <span id="slider-val-d" class="dim-compact-val">24"</span>
+                  <button class="step-btn" data-dim="depth" data-delta="4" aria-label="Increase depth">+</button>
+                </div>
+              </div>
+
+              <!-- Shelving Tiers Count -->
+              <div class="dim-compact-row">
+                <span class="dim-compact-label">Shelves</span>
+                <div class="dim-compact-stepper">
+                  <button id="btn-shelves-minus" class="step-btn" data-shelf-delta="-1" aria-label="Decrease shelves">−</button>
+                  <span id="slider-val-shelves" class="dim-compact-val">4 Levels</span>
+                  <button id="btn-shelves-plus" class="step-btn" data-shelf-delta="1" aria-label="Increase shelves">+</button>
+                </div>
+                <span id="shelves-count-badge" class="tier-count-pill" style="display: none;">4 Levels</span>
+              </div>
+            </div>
+
+            <!-- Hidden range inputs to retain slider-based state listeners safely -->
+            <input id="range-w" type="range" min="36" max="120" step="6" value="64" style="display: none;">
+            <input id="range-h" type="range" min="48" max="96" step="6" value="72" style="display: none;">
+            <input id="range-d" type="range" min="16" max="32" step="4" value="24" style="display: none;">
+
+            <div class="dim-dropdown-actions">
+              <button id="btn-dropdown-launch-wizard" class="btn-dropdown-wizard" title="Open Step-by-Step Design Wizard">
+                <span>✨ Step-by-Step Wizard</span>
+              </button>
+              <button id="btn-dropdown-reset-design" class="btn-dropdown-reset" title="Reset all dimensions and shelves to default">
+                <span>🔄 Reset</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Tab Pane 2: Compact 2-Column Architectural Layout Presets -->
+          <div id="top-pane-presets" class="top-tab-pane">
+            <div class="presets-compact-grid">
+              <button class="top-preset-item active" data-preset="tote_rack">
+                <span class="preset-item-icon">📦</span>
+                <div class="preset-item-info">
+                  <span class="preset-item-title">Tote Master</span>
+                  <span class="preset-item-sub">64"×72"×24"</span>
+                </div>
+              </button>
+              <button class="top-preset-item" data-preset="workbench_storage">
+                <span class="preset-item-icon">🔨</span>
+                <div class="preset-item-info">
+                  <span class="preset-item-title">Workbench</span>
+                  <span class="preset-item-sub">60"×80"×24"</span>
+                </div>
+              </button>
+              <button class="top-preset-item" data-preset="full_utility">
+                <span class="preset-item-icon">📐</span>
+                <div class="preset-item-info">
+                  <span class="preset-item-title">Full-Wall</span>
+                  <span class="preset-item-sub">72"×84"×20"</span>
+                </div>
+              </button>
+              <button class="top-preset-item" data-preset="tool_garden_bay">
+                <span class="preset-item-icon">🚜</span>
+                <div class="preset-item-info">
+                  <span class="preset-item-title">Tool Clear-Bay</span>
+                  <span class="preset-item-sub">54"×84"×24"</span>
+                </div>
+              </button>
+              <button class="top-preset-item" data-preset="tire_automotive">
+                <span class="preset-item-icon">🚗</span>
+                <div class="preset-item-info">
+                  <span class="preset-item-title">Tire / 2x6</span>
+                  <span class="preset-item-sub">48"×66"×24"</span>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating Wizard Action Bubble directly under Triangle Ruler -->
+      <button id="btn-bubble-wizard" class="action-bubble-btn wizard-bubble-btn" title="Design Wizard" aria-label="Design Wizard" data-tooltip="Design Wizard">
+        <span class="action-bubble-icon">✨</span>
+      </button>
+    </div>
+
+    <!-- Floating Action Bubbles (Right Viewport Margin: Totes, Fasteners & Wireframe) -->
+    <div class="viewport-action-bubbles interactive">
+      <button id="dock-btn-totes" class="action-bubble-btn" title="27-Gal Storage Totes" aria-label="Toggle 27-Gal Storage Totes" data-tooltip="27-Gal Storage Totes">
+        <span class="action-bubble-icon">📦</span>
+      </button>
+      <button id="dock-btn-fasteners" class="action-bubble-btn active" title="SD9112 Screws" aria-label="Toggle Fastener Clusters" data-tooltip="Fasteners">
+        <span class="action-bubble-icon">🔩</span>
+      </button>
+      <button id="dock-btn-ghost" class="action-bubble-btn" title="Wireframe Framing" aria-label="Toggle Wireframe Framing" data-tooltip="Wireframe">
+        <span class="action-bubble-icon">🧊</span>
+      </button>
+      <button id="dock-btn-reset-view" class="action-bubble-btn" title="Reset Camera View & Re-Center Model" aria-label="Reset Camera View" data-tooltip="Reset View">
+        <span class="action-bubble-icon">🎯</span>
+      </button>
+    </div>
+
+    <!-- Bottom Floating Dimensions Readout (Fat dimensions with stacked shelf count) -->
+    <div class="bottom-dock bottom-dock-plain interactive">
+      <div id="dock-summary-btn" class="fat-dimensions-display" aria-label="Overall dimensions: Click to customize in Dimensions menu" title="Click to edit dimensions">
+        <div id="pill-dims-text" class="pill-sub">
+          <span class="fat-dims-primary">64"W × 72"H × 24"D</span>
+          <span class="fat-shelves-sub">4 Shelves</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Expandable Drawer Sheet (Progressive Disclosure) -->
+    <div id="config-drawer" class="config-drawer">
+      <!-- Drawer Drag Handle & Close -->
+      <div class="drawer-header">
+        <div class="drawer-grabber"></div>
+        <button id="drawer-close" class="drawer-close-btn">&times;</button>
+      </div>
+
+      <!-- Mode Tab -->
+      <nav class="drawer-tabs">
+        <button class="drawer-tab active" data-tab="tab-tools">
+          <span>⚙️ Hardware, Bracing &amp; PDF</span>
+        </button>
+      </nav>
+
+        <!-- Tab: Tools & Export (Lateral Bracing, View Modes, PDF) -->
+        <div id="tab-tools" class="tab-pane active">
+          <div class="tools-layout">
+            <!-- Lateral Bracing Options (Ledger, Plywood, or Board) -->
+            <div class="tool-section">
+              <div class="tool-title">Lateral Shear Bracing &amp; Racking Support</div>
+              <p class="tool-desc">Select rear brace type: wall-anchored ledger, structural CDX plywood, or diagonal lumber.</p>
+              <div class="toggle-chips">
+                <button class="toggle-chip active" data-bracing="ledger">Wall-Anchored / None</button>
+                <button class="toggle-chip" data-bracing="plywood">1/2" CDX Plywood</button>
+                <button class="toggle-chip" data-bracing="diagonal">Diagonal 2x4 Board</button>
+              </div>
+              <!-- Dynamic Lateral Support & Racking Warning Banner -->
+              <div id="bracing-warning-banner" class="bracing-warning-banner warning">
+                <span class="warning-banner-icon">⚠️</span>
+                <div class="warning-banner-body">
+                  <strong class="warning-banner-title">Lateral Support Required</strong>
+                  <p class="warning-banner-text" id="bracing-warning-text">Shelving without rear diagonal or shear backing <strong>must be bolted into 16" O.C. wall studs</strong> (Simpson Titen HD / SDWS) to prevent racking collapse under heavy loads.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Visual Toggles -->
+            <div class="tool-section">
+              <div class="tool-title">Structural Viewport Layers</div>
+              <div class="toggle-chips">
+                <button id="toggle-simpson" class="toggle-chip active">Simpson RTC2Z</button>
+                <button id="toggle-studs" class="toggle-chip active">16" O.C. Studs</button>
+                <button id="toggle-badges" class="toggle-chip active" title="Toggle 3D shelf load capacity checkmark badges">✓ Load Badges</button>
+                <button id="toggle-totes" class="toggle-chip">27-Gal Bins</button>
+                <button id="toggle-wireframe" class="toggle-chip" title="Toggle framing into wireframe so only metal connectors are solid">🧊 Wireframe (Connectors Only)</button>
+              </div>
+            </div>
+
+            <!-- Retail Checkout -->
+            <div class="tool-section">
+              <div class="tool-title">Materials & Purchasing</div>
+              <div class="obstacle-quick-btns">
+                <button id="btn-tab-cart" class="btn-tool-chip">🛒 Order Materials (BOM)</button>
+              </div>
+            </div>
+
+            <!-- Download PDF Blueprint -->
+            <div class="tool-section">
+              <button id="btn-pdf" class="btn-action-primary">
+                <span>📄</span>
+                <span>Download Step-by-Step Assembly PDF</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Dynamic Bottom-Right XYZ Orientation Gizmo (Off the model) -->
+    <div id="axis-gizmo-container" class="axis-gizmo-container interactive" title="Camera Orientation (Click axes to snap view)">
+      <canvas id="axis-gizmo-canvas" width="140" height="140"></canvas>
+    </div>
+
+  </div><!-- /#xr-overlay -->
+
+  <!-- Shelf Load Analysis Popover (Click-to-Open from 3D badges) -->
+  <div id="load-popover" class="load-popover interactive">
+    <div class="popover-header">
+      <div class="popover-title-group">
+        <span id="popover-status-icon" class="status-circle-badge">✓</span>
+        <span id="popover-shelf-title" class="popover-title">Shelf Capacity</span>
+      </div>
+      <button id="popover-close" class="popover-close-btn">&times;</button>
+    </div>
+    <div class="popover-body">
+      <div class="popover-metric-row">
+        <span class="metric-label">Estimated Safe Working Load:</span>
+        <span id="popover-safe-load" class="metric-val highlight">845 lbs</span>
+      </div>
+      <div class="popover-metric-row">
+        <span class="metric-label">Theoretical NDS Limit:</span>
+        <span id="popover-theo-load" class="metric-val">1,056 lbs</span>
+      </div>
+      <div class="popover-metric-row">
+        <span class="metric-label">Safety Factor:</span>
+        <span class="metric-val green">Mandatory 20% Reduction</span>
+      </div>
+      <div class="popover-metric-row">
+        <span class="metric-label">Governing Factor:</span>
+        <span id="popover-governing" class="metric-val">Bending Stress (NDS)</span>
+      </div>
+      <div class="popover-metric-row">
+        <span class="metric-label">Corner Connectors:</span>
+        <span class="metric-val">4x Simpson RTC2Z (1,350 lbs rated)</span>
+      </div>
+      <!-- Lateral Support & Racking Requirement Callout -->
+      <div id="popover-warning-box" class="popover-warning-box warning">
+        <span class="popover-warning-icon">⚠️</span>
+        <div class="popover-warning-content">
+          <strong class="popover-warning-title">Lateral Support Required:</strong>
+          <span id="popover-warning-text" class="popover-warning-desc">Shelving without rear timber bracing must be secured to 16" O.C. wall studs via rear ledger to resist lateral racking forces.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Simpson Strong-Tie Hardware 3D Spec & Catalog Inspector Modal -->
+    <div id="simpson-hardware-modal" class="hardware-modal-overlay interactive">
+      <div class="hardware-modal-card">
+        <div class="mobile-sheet-handle"></div>
+        <!-- Modal Top Bar -->
+        <div class="hardware-modal-header">
+          <div class="hw-header-brand">
+            <span class="hw-brand-tag">SIMPSON Strong-Tie®</span>
+            <span class="hw-header-title">Technical Hardware Catalog & 3D Spec</span>
+          </div>
+          <button id="hw-modal-close" class="hw-close-btn" aria-label="Close modal">&times;</button>
+        </div>
+
+        <!-- Hardware Switcher Tabs -->
+        <div class="hw-switcher-tabs">
+          <button class="hw-tab-btn active" data-sku="RTC2Z">RTC2Z Corner</button>
+          <button class="hw-tab-btn" data-sku="RTT22Z">RTT22Z T-Post</button>
+          <button class="hw-tab-btn" data-sku="RTU2">RTU2 Joist</button>
+          <button class="hw-tab-btn" data-sku="RTA2Z">RTA2Z Angle</button>
+          <button class="hw-tab-btn" data-sku="LUS24">LUS24 Hanger</button>
+          <button class="hw-tab-btn" data-sku="SD9112">SD9 Screws</button>
+          <button class="hw-tab-btn" data-sku="TITEN_HD">Titen HD Anchor</button>
+        </div>
+
+        <!-- Modal Content Grid (Left: 3D Viewport, Right: Spec Sheet) -->
+        <div class="hw-modal-grid">
+          <!-- Left: 3D Mesh Inspection Viewport -->
+          <div class="hw-3d-pane">
+            <div class="hw-canvas-wrapper">
+              <canvas id="hardware-preview-canvas"></canvas>
+              <div class="hw-canvas-badge">
+                <span class="hw-badge-dot"></span>
+                <span>3D CAD Model</span>
+              </div>
+            </div>
+
+            <!-- 3D Viewport Controls -->
+            <div class="hw-3d-controls">
+              <button id="btn-hw-rotate" class="hw-tool-btn active" title="Toggle Turntable Rotation">
+                <span>🔄</span> <span>Turntable</span>
+              </button>
+              <button id="btn-hw-stl" class="hw-tool-btn" title="Download .STL 3D Model File">
+                <span>📥</span> <span>Download STL</span>
+              </button>
+            </div>
+            <div class="hw-3d-hint">Drag to orbit model • Scroll or pinch to zoom</div>
+          </div>
+
+          <!-- Right: Official Technical Spec Sheet -->
+          <div class="hw-spec-pane">
+            <div class="hw-spec-header">
+              <div class="hw-title-row">
+                <h3 id="hw-product-title" class="hw-product-name">Rigid Tie® Corner Connector</h3>
+                <span id="hw-product-sku" class="hw-sku-pill">RTC2Z</span>
+              </div>
+              <p id="hw-product-desc" class="hw-product-desc">High-capacity 3-way structural corner bracket connecting 2x4 posts to intersecting rails without notching.</p>
+            </div>
+
+            <!-- Engineering Metrics Grid -->
+            <div class="hw-specs-table">
+              <div class="hw-spec-row">
+                <span class="hw-spec-key">Allowable Download (Floor/Shelf):</span>
+                <span id="hw-val-download" class="hw-spec-val highlight-val">1,350 lbs</span>
+              </div>
+              <div class="hw-spec-row">
+                <span class="hw-spec-key">Allowable Uplift / Lateral:</span>
+                <span id="hw-val-lateral" class="hw-spec-val">475 lbs Uplift / 340 lbs F1/F2</span>
+              </div>
+              <div class="hw-spec-row">
+                <span class="hw-spec-key">Material Gauge & Finish:</span>
+                <span id="hw-val-gauge" class="hw-spec-val">18-Gauge Steel • ZMAX® (G185)</span>
+              </div>
+              <div class="hw-spec-row">
+                <span class="hw-spec-key">Fastening Schedule:</span>
+                <span id="hw-val-fasteners" class="hw-spec-val">14x Strong-Drive® SD #9 x 1-1/2"</span>
+              </div>
+              <div class="hw-spec-row">
+                <span class="hw-spec-key">Fastener Breakdown:</span>
+                <span id="hw-val-fastener-detail" class="hw-spec-val muted-val">4 post, 5 front rail, 5 side rail</span>
+              </div>
+              <div class="hw-spec-row">
+                <span class="hw-spec-key">Dimensions & Timber Fit:</span>
+                <span id="hw-val-dims" class="hw-spec-val">3-5/8" H × 2-1/16" W (2x4 Lumber)</span>
+              </div>
+              <div class="hw-spec-row">
+                <span class="hw-spec-key">Code Compliance & ESR:</span>
+                <span id="hw-val-code" class="hw-spec-val">ICC-ES ESR-3050, City of LA RR 25968</span>
+              </div>
+            </div>
+
+            <!-- Deep Links & Catalog Actions -->
+            <div class="hw-links-group">
+              <a id="hw-link-official" href="https://www.strongtie.com/rigidtieconnectors_tiesandstraps/rtc_tie/p/rtc" target="_blank" rel="noopener noreferrer" class="hw-link-btn">
+                <span>🔗</span> <span>Simpson Official Product Page ↗</span>
+              </a>
+              <a id="hw-link-stl-search" href="https://www.strongtie.com/search?v=%3Arelevance%3AdrawingFileType%3ASTL&tab=drawing" target="_blank" rel="noopener noreferrer" class="hw-link-btn secondary">
+                <span>📐</span> <span>Official Simpson STL 3D Drawing Library ↗</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- Omnichannel Retail BOM-to-Cart & In-Store Aisle Router Modal -->
+    <div id="retail-cart-modal" class="retail-modal-overlay interactive">
+      <div class="retail-modal-card">
+        <div class="mobile-sheet-handle"></div>
+        <!-- Modal Top Bar -->
+        <div class="retail-modal-header">
+          <div class="retail-header-brand">
+            <span class="retail-brand-icon">🛒</span>
+            <div class="retail-titles">
+              <span class="retail-modal-title">Omnichannel Materials Checkout & Store Aisle Router</span>
+              <span class="retail-modal-sub">Real-Time Contractor BOM • Direct Aisle & Bay Routing</span>
+            </div>
+          </div>
+          <button id="retail-modal-close" class="retail-close-btn" aria-label="Close modal">&times;</button>
+        </div>
+
+        <!-- Retailer Switcher Tabs -->
+        <div class="retailer-tabs-bar">
+          <button class="retailer-tab active" data-retailer="homedepot">
+            <span class="retailer-dot hd-color"></span>
+            <span>The Home Depot</span>
+          </button>
+          <button class="retailer-tab" data-retailer="lowes">
+            <span class="retailer-dot lowes-color"></span>
+            <span>Lowe's (Lowe's For Pros)</span>
+          </button>
+          <button class="retailer-tab" data-retailer="simpson_pro">
+            <span class="retailer-dot simpson-color"></span>
+            <span>Pro Dealer (demo)</span>
+          </button>
+        </div>
+
+        <!-- Cart Table & Aisle Routing -->
+        <div class="retail-modal-body">
+          <div class="retail-table-wrapper">
+            <table class="retail-materials-table">
+              <thead>
+                <tr>
+                  <th>Item / SKU</th>
+                  <th>Store Department</th>
+                  <th>Aisle & Bay</th>
+                  <th>Qty</th>
+                  <th>Unit Price</th>
+                  <th>Total</th>
+                  <th>Locate</th>
+                </tr>
+              </thead>
+              <tbody id="retail-cart-tbody">
+                <!-- Dynamically populated rows -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Bottom Financials & Contractor Savings Bar -->
+          <div class="retail-financials-bar">
+            <div class="pro-savings-badge">
+              <span class="savings-tag">PRO SAVINGS</span>
+              <span id="pro-discount-summary">10% Contractor Volume Discount Applied</span>
+            </div>
+            <div class="financials-breakdown">
+              <div class="fin-row">
+                <span>Material Subtotal:</span>
+                <span id="fin-raw-subtotal">$184.20</span>
+              </div>
+              <div class="fin-row green-text">
+                <span id="fin-discount-label">Pro Contractor Discount (10%):</span>
+                <span id="fin-discount-val">-$18.42</span>
+              </div>
+              <div class="fin-row">
+                <span>Estimated Sales Tax (7.5%):</span>
+                <span id="fin-tax-val">$12.43</span>
+              </div>
+              <div class="fin-total-row">
+                <span>Estimated Order Total:</span>
+                <span id="fin-grand-total">$178.21</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lateral Support & Anchoring Compliance Banner -->
+          <div class="retail-safety-note">
+            <span class="retail-safety-icon">⚠️</span>
+            <span class="retail-safety-text"><strong>Lateral Support Required:</strong> Simpson Titen HD anchors are included in your bill of materials to secure rear ledgers into 16" O.C. wall studs, providing mandatory racking resistance.</span>
+          </div>
+        </div>
+
+        <!-- Modal Footer Actions -->
+        <div class="retail-modal-footer">
+          <div class="footer-left-actions">
+            <button id="btn-export-csv" class="btn-retail-secondary">
+              <span>📥</span> <span>Download CSV</span>
+            </button>
+            <button id="btn-print-pick-list" class="btn-retail-secondary">
+              <span>🖨️</span> <span>Print Store Aisle Pick-Sheet</span>
+            </button>
+          </div>
+          <a id="btn-proceed-retailer" href="https://www.homedepot.com" target="_blank" rel="noopener noreferrer" class="btn-retail-primary">
+            <span>🛒</span> <span id="btn-retailer-label">Send to The Home Depot Cart ↗</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive Project Setup Wizard Modal (Pre-AR & Customization Flow) -->
+    <div id="project-wizard-modal" class="wizard-modal-overlay interactive" style="display: none;">
+      <div class="wizard-modal-card">
+        <!-- Wizard Header -->
+        <div class="wizard-modal-header">
+          <div class="wizard-header-brand">
+            <span class="wizard-brand-icon">📐</span>
+            <div class="wizard-titles">
+              <span class="wizard-modal-title">Project Setup Wizard</span>
+              <span id="wizard-step-subtitle" class="wizard-modal-sub">Step 1 of 3: Choose Storage Purpose</span>
+            </div>
+          </div>
+          <button id="wizard-modal-close" class="wizard-close-btn" aria-label="Close Wizard">&times;</button>
+        </div>
+
+        <!-- Wizard Step Progress Bar -->
+        <div class="wizard-progress-bar-container">
+          <div class="wizard-step-indicator active" data-wstep="1">
+            <span class="wstep-num">1</span>
+            <span class="wstep-label">Use Case</span>
+          </div>
+          <div class="wstep-line"></div>
+          <div class="wizard-step-indicator" data-wstep="2">
+            <span class="wstep-num">2</span>
+            <span class="wstep-label">Dimensions</span>
+          </div>
+          <div class="wstep-line"></div>
+          <div class="wizard-step-indicator" data-wstep="3">
+            <span class="wstep-num">3</span>
+            <span class="wstep-label">Place & Review</span>
+          </div>
+        </div>
+
+        <!-- Wizard Body: Step Panes -->
+        <div class="wizard-modal-body">
+          <!-- Step 1: Storage Use Case -->
+          <div id="wizard-pane-1" class="wizard-step-pane active">
+            <h3 class="wizard-pane-heading">What are you storing in your garage?</h3>
+            <p class="wizard-pane-desc">Select a preset to auto-calculate the ideal shelf heights, bay clearances, and Simpson hardware.</p>
+            <div class="wizard-usecase-grid">
+              <div class="wizard-usecase-card active" data-wpreset="tote_rack">
+                <div class="wcard-icon">📦</div>
+                <div class="wcard-content">
+                  <div class="wcard-title">27-Gallon Heavy Duty Totes</div>
+                  <div class="wcard-desc">Fits 8–12 Commander / Tough Box bins with snap lids. Optimal 20.5" clear shelf bays.</div>
+                  <div class="wcard-tag">Most Popular • 64"W × 72"H × 24"D</div>
+                </div>
+                <div class="wcard-check">✓</div>
+              </div>
+
+              <div class="wizard-usecase-card" data-wpreset="workbench_storage">
+                <div class="wcard-icon">🔨</div>
+                <div class="wcard-content">
+                  <div class="wcard-title">Workbench + Overhead Storage</div>
+                  <div class="wcard-desc">36" high waist-level butcher block / plywood work surface with 2 overhead tool tiers.</div>
+                  <div class="wcard-tag">Workshop Focus • 72"W × 78"H × 24"D</div>
+                </div>
+                <div class="wcard-check">✓</div>
+              </div>
+
+              <div class="wizard-usecase-card" data-wpreset="hardware_heavy">
+                <div class="wcard-icon">🛞</div>
+                <div class="wcard-content">
+                  <div class="wcard-title">Heavy Tires & Hardware</div>
+                  <div class="wcard-desc">Reinforced 2x6 frame engineered for tires, heavy power tool cases, and engine parts.</div>
+                  <div class="wcard-tag">Heavy Load • 96"W × 72"H × 24"D</div>
+                </div>
+                <div class="wcard-check">✓</div>
+              </div>
+
+              <div class="wizard-usecase-card" data-wpreset="pantry_supplies">
+                <div class="wcard-icon">🥫</div>
+                <div class="wcard-content">
+                  <div class="wcard-title">Compact Pantry & Household Bins</div>
+                  <div class="wcard-desc">Narrow 16" shelf depth to fit narrow garage walkways. 5 tiers for max vertical storage.</div>
+                  <div class="wcard-tag">Tight Spaces • 48"W × 72"H × 16"D</div>
+                </div>
+                <div class="wcard-check">✓</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 2: Dimensions & Sizing -->
+          <div id="wizard-pane-2" class="wizard-step-pane">
+            <h3 class="wizard-pane-heading">Confirm your wall dimensions</h3>
+            <p class="wizard-pane-desc">Fine-tune the size to fit your garage wall opening.</p>
+            
+            <div class="wizard-dim-group">
+              <label class="wizard-dim-label">
+                <span>Overall Width:</span>
+                <strong id="wdim-val-width">64 inches</strong>
+              </label>
+              <div class="wizard-pill-options" id="wpills-width">
+                <button class="wpill" data-wdim="width" data-val="48">48" (4 ft)</button>
+                <button class="wpill active" data-wdim="width" data-val="64">64" (Tote Fit)</button>
+                <button class="wpill" data-wdim="width" data-val="72">72" (6 ft)</button>
+                <button class="wpill" data-wdim="width" data-val="96">96" (8 ft)</button>
+              </div>
+            </div>
+
+            <div class="wizard-dim-group">
+              <label class="wizard-dim-label">
+                <span>Overall Height:</span>
+                <strong id="wdim-val-height">72 inches</strong>
+              </label>
+              <div class="wizard-pill-options" id="wpills-height">
+                <button class="wpill" data-wdim="height" data-val="60">60" (5 ft)</button>
+                <button class="wpill active" data-wdim="height" data-val="72">72" (6 ft)</button>
+                <button class="wpill" data-wdim="height" data-val="84">84" (7 ft)</button>
+                <button class="wpill" data-wdim="height" data-val="96">96" (8 ft)</button>
+              </div>
+            </div>
+
+            <div class="wizard-dim-group">
+              <label class="wizard-dim-label">
+                <span>Shelf Depth:</span>
+                <strong id="wdim-val-depth">24 inches</strong>
+              </label>
+              <div class="wizard-pill-options" id="wpills-depth">
+                <button class="wpill" data-wdim="depth" data-val="16">16" (Pantry / Narrow)</button>
+                <button class="wpill" data-wdim="depth" data-val="20">20" (Standard)</button>
+                <button class="wpill active" data-wdim="depth" data-val="24">24" (Deep Tote / Box)</button>
+              </div>
+            </div>
+
+            <div class="wizard-dim-group">
+              <label class="wizard-dim-label">
+                <span>Shelving Tiers:</span>
+                <strong id="wdim-val-shelves">4 Shelves</strong>
+              </label>
+              <div class="wizard-pill-options" id="wpills-shelves">
+                <button class="wpill" data-wdim="shelves" data-val="3">3 Tiers</button>
+                <button class="wpill active" data-wdim="shelves" data-val="4">4 Tiers</button>
+                <button class="wpill" data-wdim="shelves" data-val="5">5 Tiers</button>
+                <button class="wpill" data-wdim="shelves" data-val="6">6 Tiers</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3: Spec Review & Launch -->
+          <div id="wizard-pane-3" class="wizard-step-pane">
+            <h3 class="wizard-pane-heading">Your Custom Organizer is Ready!</h3>
+            <p class="wizard-pane-desc">Review your certified structural specs and hardware schedule before placing into your garage.</p>
+
+            <div class="wizard-summary-card">
+              <div class="wsummary-top">
+                <div class="wsummary-badge">
+                  <span class="wsummary-check">✓</span>
+                  <div>
+                    <div id="wsummary-title" class="wsummary-name">27-Gallon Tote Master</div>
+                    <div id="wsummary-dims" class="wsummary-spec">64"W × 72"H × 24"D • 4 Shelves</div>
+                  </div>
+                </div>
+                <div class="wsummary-load-pill">
+                  <span class="pulse-dot"></span>
+                  <span id="wsummary-load">1,840 lbs Safe</span>
+                  <span class="safety-tag">20% MARGIN</span>
+                </div>
+              </div>
+
+              <div class="wsummary-specs-grid">
+                <div class="wspec-box">
+                  <span class="wspec-label">Simpson RTC2Z Brackets</span>
+                  <span id="wsummary-connectors" class="wspec-val">16 pcs</span>
+                  <span class="wspec-sub">1,350 lbs rated download</span>
+                </div>
+                <div class="wspec-box">
+                  <span class="wspec-label">Framing Lumber</span>
+                  <span id="wsummary-boards" class="wspec-val">12x 2x4 Boards</span>
+                  <span class="wspec-sub">1D bin-pack optimized</span>
+                </div>
+                <div class="wspec-box">
+                  <span class="wspec-label">Simpson Fasteners</span>
+                  <span id="wsummary-screws" class="wspec-val">224x SD #9 Screws</span>
+                  <span class="wspec-sub">Strong-Drive hex head</span>
+                </div>
+                <div class="wspec-box">
+                  <span class="wspec-label">Wall Stud Anchors</span>
+                  <span class="wspec-val">4x Simpson Titen HD</span>
+                  <span class="wspec-sub">Bolts into 16" O.C. studs</span>
+                </div>
+              </div>
+
+              <!-- Lateral Support & Anti-Racking Advisory -->
+              <div class="wizard-racking-advisory">
+                <span class="wizard-racking-icon">⚠️</span>
+                <div class="wizard-racking-text">
+                  <strong>Lateral Support Required:</strong> All garage shelving requires positive lateral racking resistance. Anchor rear ledgers into 16" O.C. wall studs or configure diagonal/plywood shear bracing.
+                </div>
+              </div>
+            </div>
+
+            <div class="wizard-action-card">
+              <button id="wizard-btn-launch-ar" class="btn-wizard-launch-ar">
+                <span class="btn-ar-icon">👓</span>
+                <div class="btn-ar-text-group">
+                  <span class="btn-ar-title">Launch AR & Place in Space</span>
+                  <span class="btn-ar-sub">Aim at your wall and tap once to anchor 1:1 scale</span>
+                </div>
+                <span class="btn-ar-arrow">➔</span>
+              </button>
+
+              <button id="wizard-btn-apply-3d" class="btn-wizard-view-3d">
+                <span>View & Rotate in 3D Studio</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Wizard Footer -->
+        <div class="wizard-modal-footer">
+          <button id="wizard-btn-back" class="btn-wizard-nav secondary" style="display: none;">
+            <span>◄ Back</span>
+          </button>
+          <div class="wizard-footer-spacer"></div>
+          <button id="wizard-btn-next" class="btn-wizard-nav primary">
+            <span>Continue ➔</span>
+          </button>
+        </div>
+      </div>
+    <!-- WebXR AR Mobile QR & Guidance Modal -->
+    <div id="ar-unsupported-modal" class="hardware-modal-overlay interactive" style="display: none;">
+      <div class="ar-unsupported-card">
+        <div class="mobile-sheet-handle"></div>
+        <div class="ar-unsupported-header">
+          <div class="ar-unsupported-title-group">
+            <span class="ar-unsupported-icon">👓</span>
+            <div>
+              <h3 class="ar-unsupported-title">WebXR Augmented Reality</h3>
+              <span class="ar-unsupported-sub">Place this organizer 1:1 scale against your garage wall</span>
+            </div>
+          </div>
+          <button id="ar-unsupported-close" class="hw-close-btn" aria-label="Close dialog">&times;</button>
+        </div>
+
+        <div class="ar-unsupported-body">
+          <div class="ar-unsupported-notice">
+            <span class="notice-icon">📱</span>
+            <div class="notice-text">
+              <strong>Mobile AR Device Required:</strong>
+              WebXR camera tracking runs natively on mobile devices equipped with motion and surface sensors (such as Google Chrome on Android or WebXR viewers on iOS).
+            </div>
+          </div>
+
+          <div class="ar-qr-section">
+            <div class="ar-qr-frame">
+              <img src="./qr_code.png" alt="Scan QR Code to open in AR" class="ar-qr-image" />
+            </div>
+            <div class="ar-qr-instructions">
+              <span class="qr-step-title">Scan to Open on Your Phone:</span>
+              <ol class="qr-steps-list">
+                <li>Open your phone's camera and point it at the QR code.</li>
+                <li>Tap the link to open this exact custom design.</li>
+                <li>Tap <strong>Enter AR</strong> to place it on your wall!</li>
+              </ol>
+              <div class="ar-qr-actions">
+                <button id="btn-ar-copy-link" class="btn-ar-modal-action">
+                  <span>🔗</span> <span>Copy Mobile Link</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="ar-unsupported-footer-note">
+            <span>💡 <strong>Tip:</strong> Your 3D design and materials list remain fully active and safe in this 3D studio viewer right now.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+</body>
+</html>
